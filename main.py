@@ -5,44 +5,34 @@ import asyncio
 # Введите данные API
 api_id = ''
 api_hash = ''
+channel_id = ''  # ID канала (durov)
 
 # Клиент
 client = TelegramClient('session_name', api_id, api_hash, system_version="1.8.0 (324)")
 
-async def parsing(client):
-    dialogs = await client.get_dialogs()
-    print("Диалогов на аккаунте: ", len(dialogs))
-    flag = True
-    data = []
-    cnt_true = 0
-    for i in range(0, len(dialogs)):
-        if isinstance(dialogs[i].entity, User):
-            try:
-                username = dialogs[i].entity.username
-                if username is not None:
-                    data.append(username)
-                    cnt_true += 1
-            except Exception as e:
-                print("ERROR ", e)
-                print("Номер на котором остановилась работа: ", i)
-                print("Успело собраться: ", cnt_true)
-                flag = False
-                break
+async def collect_usernames(client, channel_id):
+    try:
+        participants = await client.get_participants(channel_id)
+        print(f"Количество участников в канале: {len(participants)}")
 
-    with open("usernames.txt", "a", encoding='utf-8') as file:
-        for username in data:
-            file.write(username + "\n")
-    if flag:
-        print("Успешное завершение, собрано username's: ", cnt_true)
-    else:
-        print("Завершение с ошибкой, за этот запуск собрано: ", cnt_true)
-        print("Запустите скрипт снова с циклом, который начинается с номера: ", i)
-    exit()
+        data = []
+        for participant in participants:
+            if isinstance(participant, User) and participant.username:
+                data.append(participant.username)
+
+        # Сохраняем usernames в файл
+        with open("usernames.txt", "w", encoding="utf-8") as file:
+            for username in data:
+                file.write(username + "\n")
+
+        print(f"Собрано {len(data)} usernames. Результаты сохранены в usernames.txt.")
+    except Exception as e:
+        print("Произошла ошибка: ", e)
 
 # Запуск
 async def main():
     await client.start(password=str(input("Введите пароль: ")))
-    await parsing(client)
+    await collect_usernames(client, channel_id)
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
