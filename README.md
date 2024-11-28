@@ -1,4 +1,4 @@
-# Telegram Username Scraper
+# Telegram Channel Username Scraper
 
 ## Описание
 
